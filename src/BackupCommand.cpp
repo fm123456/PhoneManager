@@ -19,10 +19,7 @@ RCBackupCommand::~RCBackupCommand()
 
 }
 
-void RCBackupCommand::Execute()
+void RCBackupCommand::Init()
 {
-	std::string nCmdLine = "adb backup -f backup.ab -apk -shared -all";
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb backup -f backup.ab -apk -shared -all";
 }

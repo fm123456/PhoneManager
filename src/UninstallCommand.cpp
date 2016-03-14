@@ -18,15 +18,12 @@ RCUninstallCommand::~RCUninstallCommand()
 
 }
 
-void RCUninstallCommand::Execute()
+void RCUninstallCommand::Init()
 {
 	std::string nApkName;
 
 	std::cout << "please input the name of package:";
 	std::cin >> nApkName;
 
-	std::string nCmdLine = "adb uninstall " + nApkName;
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb uninstall " + nApkName;
 }

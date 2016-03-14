@@ -7,10 +7,9 @@
 *****************************************************************************/
 
 #include "Command.h"
-#include <iostream>
+#include "CommandFactory.h"
 
-HANDLE hConnectEvent = NULL;
-HANDLE hExitEvent    = NULL;
+#include <iostream>
 
 typedef struct
 {
@@ -32,29 +31,44 @@ DWORD WINAPI ReadPipeThread(LPVOID pData)
 
 RCCommand::RCCommand()
 {
-
+	::WaitForSingleObject(m_hOutputEvent, INFINITE);
+	m_hOutputEvent = ::CreateEvent(NULL, FALSE, TRUE, NULL);
 }
 
 RCCommand::~RCCommand()
 {
-
+	::CloseHandle(m_hOutputEvent);
 }
 
-const std::string& RCCommand::GetOutput() const
+void RCCommand::GetOutput(std::string& Output) const
 {
-	return m_nOutput;
+	::WaitForSingleObject(m_hOutputEvent, INFINITE);
+
+	Output = m_Output;
+
+	::SetEvent(m_hOutputEvent);
 }
 
-void RCCommand::SetOutput(const std::string& nOutput)
+void RCCommand::SetOutput(const std::string& Output)
 {
-	m_nOutput = nOutput;
+	::WaitForSingleObject(m_hOutputEvent, INFINITE);
+
+	m_Output = Output;
+
+	::SetEvent(m_hOutputEvent);
 }
 
-void RCCommand::DoExecute(const std::string& nCmdLine)
+void RCCommand::Execute()
 {
-	m_nOutput = "";
-	HANDLE out_read;
-	HANDLE out_write;
+	Init();
+	DoExecute(m_CmdLine);
+}
+
+void RCCommand::DoExecute(const std::string& CmdLine)
+{
+	m_Output = "";
+	HANDLE hOutRead;
+	HANDLE hOutWrite;
 
 	SECURITY_ATTRIBUTES sa;
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -62,7 +76,7 @@ void RCCommand::DoExecute(const std::string& nCmdLine)
 	sa.bInheritHandle = TRUE;
 
 	// 创建管道
-	if (!::CreatePipe(&out_read, &out_write, &sa, 0))
+	if (!::CreatePipe(&hOutRead, &hOutWrite, &sa, 0))
 	{
 		std::cerr << ("Unable to create stdout/stderr pipe for task process") << std::endl;
 		return;
@@ -70,15 +84,15 @@ void RCCommand::DoExecute(const std::string& nCmdLine)
 
 	STARTUPINFO si = { sizeof(si) };
 	::GetStartupInfo(&si);
-	si.hStdError   = out_write;
-	si.hStdOutput  = out_write;
+	si.hStdError = hOutWrite;
+	si.hStdOutput = hOutWrite;
 	si.wShowWindow = SW_HIDE;
 	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 	PROCESS_INFORMATION pi;
 	::ZeroMemory(&pi, sizeof(pi));
 
 	if (!::CreateProcess(NULL,
-		(LPTSTR)nCmdLine.c_str(),
+		(LPTSTR)CmdLine.c_str(),
 		NULL,
 		NULL,
 		TRUE,
@@ -88,44 +102,49 @@ void RCCommand::DoExecute(const std::string& nCmdLine)
 		&si,
 		&pi))
 	{
-		std::cout << "Failed to create process for command: " << nCmdLine << std::endl;
-		::CloseHandle(out_write);
-		::CloseHandle(out_read);
+		std::cout << "Failed to create process for command: " << CmdLine << std::endl;
+		::CloseHandle(hOutWrite);
+		::CloseHandle(hOutRead);
 
 		std::cout << ::GetLastError() << std::endl;
 		return;
 	}
-	::CloseHandle(out_write);
+	::CloseHandle(hOutWrite);
 	
-	TReadPipeData nThreadData = { out_read ,this};
-	HANDLE hReadPipeThread = ::CreateThread(NULL, 0, ReadPipeThread, &nThreadData, 0, NULL);
+	ReadOutput(hOutRead, pi.hProcess);
 
-	unsigned long exit_code = 0;
-	while (::GetExitCodeProcess(pi.hProcess, &exit_code) && STILL_ACTIVE == exit_code)
-	{
-		//检测当前连接的状态
-		DWORD nRet = ::WaitForSingleObject(hConnectEvent, 0);
-		
-		//触发被关闭，连接事件中断
-		if (nRet != 0)   
-		{
-			std::cout << "Connection has closed.Now terminate the command process" << std::endl;
-			::TerminateProcess(pi.hProcess, exit_code);
-			break;
-		}
-		Sleep(1000);
-	}
-
-	::CloseHandle(out_read);
+	::CloseHandle(hOutRead);
 	::WaitForSingleObject(pi.hProcess,     INFINITE);
-	::WaitForSingleObject(hReadPipeThread, INFINITE);
 
 	::CloseHandle(pi.hProcess);
 }
 
-std::string RCCommand::ReadFromPipe(HANDLE hRead)
+void RCCommand::ReadOutput(HANDLE hRead, HANDLE hProcess)
 {
-	std::string content;
+	TReadPipeData nThreadData = { hRead, this };
+	HANDLE hReadPipeThread = ::CreateThread(NULL, 0, ReadPipeThread, &nThreadData, 0, NULL);
+
+	unsigned long exit_code = 0;
+	while (::GetExitCodeProcess(hProcess, &exit_code) && STILL_ACTIVE == exit_code)
+	{
+		//检测当前连接的状态
+		DWORD nRet = ::WaitForSingleObject(RCCommandFactory::g_hConnectEvent, 0);
+
+		//触发被关闭，连接事件中断
+		if (nRet != 0)
+		{
+			std::cout << "Connection has closed.Now terminate the command process" << std::endl;
+			::TerminateProcess(hProcess, exit_code);
+			break;
+		}
+		Sleep(1000);
+	}
+	::WaitForSingleObject(hReadPipeThread, INFINITE);
+}
+
+std::string RCCommand::ReadFromPipe(HANDLE hRead, bool IsPrintOutput)
+{
+	std::string Content;
 
 	const int READ_BUFFER_SIZE = 4096;
 	char buffer[READ_BUFFER_SIZE] = { 0 };
@@ -133,12 +152,15 @@ std::string RCCommand::ReadFromPipe(HANDLE hRead)
 
 	while (::ReadFile(hRead, buffer, READ_BUFFER_SIZE, &bytes, NULL) && bytes > 0)
 	{
-		std::cout << buffer << std::endl;
-		content.append(buffer, bytes);
+		if (IsPrintOutput)
+		{
+			std::cout << buffer << std::endl;
+		}
+		Content.append(buffer, bytes);
 
 		memset(buffer, 0, bytes);
 	}
 
-	return content;
+	return Content;
 }
 

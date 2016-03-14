@@ -15,6 +15,12 @@
 #include "UninstallCommand.h"
 #include "UploadCommand.h"
 
+//创建是否连接事件
+HANDLE RCCommandFactory::g_hConnectEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+
+//创建是否退出事件
+HANDLE RCCommandFactory::g_hExitEvent = ::CreateEvent(NULL, TRUE, TRUE, NULL);
+
 RCCommandFactory::RCCommandFactory()
 {
 
@@ -22,7 +28,8 @@ RCCommandFactory::RCCommandFactory()
 
 RCCommandFactory::~RCCommandFactory()
 {
-
+	::CloseHandle(g_hConnectEvent);
+	::CloseHandle(g_hExitEvent);
 }
 
 RCCommandFactory* RCCommandFactory::Instance()
@@ -33,32 +40,32 @@ RCCommandFactory* RCCommandFactory::Instance()
 
 RCCommand* RCCommandFactory::CreateCommand(TCommandId nCmdId)
 {
-	RCCommand* cmd = NULL;
+	RCCommand* pCmd = NULL;
 	switch (nCmdId)
 	{
 	case CheckConnectionCmd:
-		cmd = new RCCheckConnectionCommand();
+		pCmd = new RCCheckConnectionCommand();
 		break;
 	case InstallCmd:
-		cmd = new RCInstallCommand();
+		pCmd = new RCInstallCommand();
 		break;
 	case UninstallCmd:
-		cmd = new RCUninstallCommand();
+		pCmd = new RCUninstallCommand();
 		break;
 	case UploadCmd:
-		cmd = new RCUploadCommand();
+		pCmd = new RCUploadCommand();
 		break;
 	case DownLoadCmd:
-		cmd = new RCDownloadCommand();
+		pCmd = new RCDownloadCommand();
 		break;
 	case BackupCmd:
-		cmd = new RCBackupCommand();
+		pCmd = new RCBackupCommand();
 		break;
 	case RestoreCmd:
-		cmd = new RCRestoreCommand();
+		pCmd = new RCRestoreCommand();
 		break;
 	default:
 		break;
 	}
-	return cmd;
+	return pCmd;
 }

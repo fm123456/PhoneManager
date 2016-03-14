@@ -19,7 +19,7 @@ RCUploadCommand::~RCUploadCommand()
 
 }
 
-void RCUploadCommand::Execute()
+void RCUploadCommand::Init()
 {
 	std::string nLocalPath;
 	std::string nRemotePath;
@@ -30,8 +30,5 @@ void RCUploadCommand::Execute()
 	std::cout << "please input remote device path:";
 	std::cin >> nRemotePath;
 
-	std::string nCmdLine = "adb push " + nLocalPath + " " + nRemotePath;
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb push " + nLocalPath + " " + nRemotePath;
 }

@@ -19,15 +19,12 @@ RCInstallCommand::~RCInstallCommand()
 
 }
 
-void RCInstallCommand::Execute()
+void RCInstallCommand::Init()
 {
 	std::string nApkPath;
 	
 	std::cout << "please input the path of apk:";
 	std::cin >> nApkPath;
 
-	std::string nCmdLine = "adb install " + nApkPath;
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb install " + nApkPath;
 }

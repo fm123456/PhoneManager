@@ -19,34 +19,39 @@
 */
 DWORD WINAPI CheckThread(LPVOID pM)
 {
-	RCCheckConnectionCommand* nCheckCmd = (RCCheckConnectionCommand*)RCCommandFactory::Instance()->CreateCommand(CheckConnectionCmd);
-	bool nConnectionFlag = false;
-
-	while (::WaitForSingleObject(hExitEvent, 0) == 0)
+	RCCheckConnectionCommand* pCheckCmd = (RCCheckConnectionCommand*)RCCommandFactory::Instance()->CreateCommand(CheckConnectionCmd);
+	if (!pCheckCmd)
 	{
-		nCheckCmd->Execute();
-		bool nTemp = nCheckCmd->HasConnected();
+		return 1;
+	}
 
-		if (nTemp != nConnectionFlag)
+	bool PreConnectionFlag = false;
+
+	while (::WaitForSingleObject(RCCommandFactory::g_hExitEvent, 0) == 0)
+	{
+		pCheckCmd->Execute();
+		bool HasConnect = pCheckCmd->HasConnected();
+
+		if (HasConnect != PreConnectionFlag)
 		{
-			if (nTemp)
+			if (HasConnect)
 			{
 				std::cout << "Connect successfully !" << std::endl;
-				::SetEvent(hConnectEvent);
+				::SetEvent(RCCommandFactory::g_hConnectEvent);
 			}
 			else
 			{
 				std::cout << "connection has been broken! waiting for connect..." << std::endl;
-				::ResetEvent(hConnectEvent);
+				::ResetEvent(RCCommandFactory::g_hConnectEvent);
 			}
-			nConnectionFlag = nTemp;
+			PreConnectionFlag = HasConnect;
 		}
 
 		Sleep(1000);  //每隔一秒检查一次
 	}
 
-	delete nCheckCmd;
-	nCheckCmd = NULL;
+	delete pCheckCmd;
+	pCheckCmd = NULL;
 	
 	return 0;
 }
@@ -55,23 +60,17 @@ int main(int argc, char** argv)
 {
 	std::cout << "waiting for connect..." << std::endl;
 
-	//创建是否连接事件
-	hConnectEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-	::WaitForSingleObject(hConnectEvent, INFINITE);
-	//创建是否退出事件
-	hExitEvent = ::CreateEvent(NULL, TRUE, TRUE, NULL);
-
 	//创建定时检测线程
 	HANDLE hCheakThread  = ::CreateThread(NULL, 0, CheckThread, NULL, 0, NULL);
 
 
-	std::string nFunction;
+	std::string FunctionStr;
 	
 
 	while (true)
 	{
 		//如果连接关闭则会一直等待连接
-		::WaitForSingleObject(hConnectEvent, INFINITE);
+		::WaitForSingleObject(RCCommandFactory::g_hConnectEvent, INFINITE);
 
 		std::cout << "------------------------------------------" << std::endl;
 		std::cout << "        |    1、Install        |" << std::endl;
@@ -84,35 +83,32 @@ int main(int argc, char** argv)
 		std::cout << "------------------------------------------" << std::endl;
 
 		std::cout << "please Chose the Function:";
-		std::cin >> nFunction;
+		std::cin >> FunctionStr;
 		
-		if (nFunction.length() != 1 || nFunction[0] > '7' || nFunction[0] < '1')
+		if (FunctionStr.length() != 1 || FunctionStr[0] > '7' || FunctionStr[0] < '1')
 		{
 			std::cout << "input value is invalid " << std::endl;
 			continue;
 		}
 
-		TCommandId nFunctionId = TCommandId(atoi(nFunction.c_str()));
-		if (nFunctionId == ExitCmd)
+		TCommandId FunctionId = TCommandId(atoi(FunctionStr.c_str()));
+		if (FunctionId == ExitCmd)
 		{
-			::ResetEvent(hExitEvent);
+			::ResetEvent(RCCommandFactory::g_hExitEvent);
 			break;
 		}
 
-		RCCommand* cmd = RCCommandFactory::Instance()->CreateCommand(nFunctionId);
-		if (cmd)
+		RCCommand* pCmd = RCCommandFactory::Instance()->CreateCommand(FunctionId);
+		if (pCmd)
 		{
-			cmd->Execute();
-			delete cmd;
-			cmd = NULL;
+			pCmd->Execute();
+			delete pCmd;
+			pCmd = NULL;
 		}
 	}
 	
 	//等待检测线程结束
 	::WaitForSingleObject(hCheakThread, INFINITE);
-
-	::CloseHandle(hConnectEvent); 
-	::CloseHandle(hExitEvent);
 	::CloseHandle(hCheakThread);
 	return 0;
 }

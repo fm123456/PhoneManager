@@ -1,7 +1,16 @@
-﻿Build started 2016/3/14 11:32:41.
-     1>Project "E:\myProject\myProject\PhoneManager\build\msvc\PhoneManager.vcxproj" on node 2 (Build target(s)).
+﻿Build started 2016/3/14 17:49:03.
+     1>Project "E:\PhoneManager\build\msvc\PhoneManager.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         D:\vs2013\VC\bin\CL.exe /c /I../../include /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\src\main.cpp
+         D:\vs2013\VC\bin\CL.exe /c /I../../include /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\src\BackupCommand.cpp ..\..\src\CheckConnectionCommand.cpp ..\..\src\Command.cpp ..\..\src\CommandFactory.cpp ..\..\src\DownloadCommand.cpp ..\..\src\InstallCommand.cpp ..\..\src\RestoreCommand.cpp ..\..\src\UninstallCommand.cpp ..\..\src\UploadCommand.cpp ..\..\src\main.cpp
+         BackupCommand.cpp
+         CheckConnectionCommand.cpp
+         Command.cpp
+         CommandFactory.cpp
+         DownloadCommand.cpp
+         InstallCommand.cpp
+         RestoreCommand.cpp
+         UninstallCommand.cpp
+         UploadCommand.cpp
          main.cpp
        Link:
          D:\vs2013\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\bin\Release\PhoneManager.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"..\..\bin\Release\PhoneManager.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\..\bin\Release\PhoneManager.lib" /MACHINE:X86 /SAFESEH Release\BackupCommand.obj
@@ -16,9 +25,9 @@
          Release\UploadCommand.obj
          Generating code
          Finished generating code
-         PhoneManager.vcxproj -> E:\myProject\myProject\PhoneManager\build\msvc\..\..\bin\Release\PhoneManager.exe
-     1>Done Building Project "E:\myProject\myProject\PhoneManager\build\msvc\PhoneManager.vcxproj" (Build target(s)).
+         PhoneManager.vcxproj -> E:\PhoneManager\build\msvc\..\..\bin\Release\PhoneManager.exe
+     1>Done Building Project "E:\PhoneManager\build\msvc\PhoneManager.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.82
+Time Elapsed 00:00:06.62

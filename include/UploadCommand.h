@@ -26,9 +26,10 @@ public:
 	*/
 	virtual ~RCUploadCommand();
 
-	/** adb命令执行函数
+private:
+	/** 初始化函数，用来获取设置adb命令以及相关参数，在Execute之前必须要调用Init()
 	*/
-	virtual void Execute();
+	virtual void Init();
 
 private:
 	 

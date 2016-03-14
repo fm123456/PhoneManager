@@ -27,113 +27,59 @@ bool RCCheckConnectionCommand::HasConnected() const
 	return m_nConnection;
 }
 
-void RCCheckConnectionCommand::Execute()
+void RCCheckConnectionCommand::Init()
 {
-	std::string nCmdLine = "adb devices";
-	DoExecute(nCmdLine);
-
-	const std::string& nOutput = GetOutput();
-	if (nOutput.empty())
-	{
-		return;
-	}
-
-	m_nConnection = CheckConnection(nOutput);
+	m_CmdLine = "adb devices";
 }
 
-void RCCheckConnectionCommand::DoExecute(const std::string& nCmdLine)
+void RCCheckConnectionCommand::Execute()
 {
-	SetOutput("");
-	HANDLE out_read;
-	HANDLE out_write;
+	RCCommand::Execute();
 
-	SECURITY_ATTRIBUTES sa;
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.lpSecurityDescriptor = NULL;
-	sa.bInheritHandle = TRUE;
-
-	// 创建管道
-	if (!::CreatePipe(&out_read, &out_write, &sa, 0))
+	std::string Output;
+	GetOutput(Output);
+	if (Output.empty())
 	{
-		std::cerr << ("Unable to create stdout/stderr pipe for task process") << std::endl;
 		return;
 	}
 
-	STARTUPINFO si = { sizeof(si) };
-	::GetStartupInfo(&si);
-	si.hStdError = out_write;
-	si.hStdOutput = out_write;
-	si.wShowWindow = SW_HIDE;
-	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-	PROCESS_INFORMATION pi;
-	::ZeroMemory(&pi, sizeof(pi));
+	m_nConnection = CheckConnection(Output);
+}
 
-	if (!::CreateProcess(NULL,
-		(LPTSTR)nCmdLine.c_str(),
-		NULL,
-		NULL,
-		TRUE,
-		NULL,
-		NULL,
-		NULL,
-		&si,
-		&pi))
-	{
-		std::cout << "Failed to create process for command: " << nCmdLine << std::endl;
-		::CloseHandle(out_write);
-		::CloseHandle(out_read);
-
-		std::cout << GetLastError() << std::endl;
-		return;
-	}
-	::CloseHandle(out_write);
-
-	std::string content;
-	const int READ_BUFFER_SIZE = 4096;
-	char buffer[READ_BUFFER_SIZE] = { 0 };
-	DWORD bytes = 0;
-
-	while (::ReadFile(out_read, buffer, READ_BUFFER_SIZE, &bytes, NULL) && bytes > 0)
-	{
-		content.append(buffer,bytes);
-		memset(buffer, 0, bytes);
-	}
-	SetOutput(content);
-
-	::CloseHandle(out_read);
-	::WaitForSingleObject(pi.hProcess, INFINITE);
-	::CloseHandle(pi.hProcess);
+void RCCheckConnectionCommand::ReadOutput(HANDLE hRead, HANDLE hProcess)
+{
+	SetOutput(RCCommand::ReadFromPipe(hRead, false));
 }
 
 bool RCCheckConnectionCommand::CheckConnection(const std::string& nContent)
 {
-	std::string nTempStr = nContent;
-	bool nTempConnect = false;
+	std::string Content = nContent;
+	bool IsConnect = false;
 
-	while (!nTempStr.empty())
+	while (!Content.empty())
 	{
-		std::string::size_type p = nTempStr.find("\r\n");
+		std::string::size_type p = Content.find("\r\n");
 		if (p != std::string::npos)
 		{
-			std::string nTempContent = nTempStr.substr(0, p);
-			if (nTempContent == g_nConnectString)
+			std::string TempContent = Content.substr(0, p);
+			if (TempContent == g_nConnectString)
 			{
-				std::string nNextContent = nTempStr.substr(p + 2);
+				std::string nNextContent = Content.substr(p + 2);
 				p = nNextContent.find("\r\n");
 
 				if (p != std::string::npos && !nNextContent.substr(0,p).empty())
 				{
-					nTempConnect = true;
+					IsConnect = true;
 				}
 				break;
 			}
-			nTempStr = nTempStr.substr(p + 2);
+			Content = Content.substr(p + 2);
 		}
 		else
 		{
-			nTempStr = "";
+			Content = "";
 		}
 	}
 
-	return nTempConnect;
+	return IsConnect;
 }

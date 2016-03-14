@@ -19,10 +19,7 @@ RCRestoreCommand::~RCRestoreCommand()
 
 }
 
-void RCRestoreCommand::Execute()
+void RCRestoreCommand::Init()
 {
-	std::string nCmdLine = "adb restore backup.ab";
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb restore backup.ab";
 }

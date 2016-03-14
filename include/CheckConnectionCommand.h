@@ -35,8 +35,17 @@ public:
 	*/
 	virtual void Execute();
 
-protected:
-	virtual void DoExecute(const std::string& nCmdLine);
+private:
+
+	/** 初始化函数，用来获取设置adb命令以及相关参数，在Execute之前必须要调用Init()
+	*/
+	virtual void Init();
+
+	/** adb命令执行函数
+	@param[in] CmdLine 需要执行的adb完整命令行信息
+	@param[in] IsAsyn是否采用用多线程来异步的读取adb输出
+	*/
+	virtual void ReadOutput(HANDLE hRead, HANDLE hProcess);
 
 private:
 	/** 按行分割字符串函数

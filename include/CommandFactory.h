@@ -9,6 +9,8 @@
 #ifndef __CommandFactory_h
 #define __CommandFactory_h
 
+#include <windows.h>
+
 /** TCommandId作为命令的枚举
 */
 enum TCommandId
@@ -46,6 +48,15 @@ public:
 	@return 创建好的命令的指针
 	*/
 	RCCommand* CreateCommand(TCommandId nCmdId);
+
+public:
+	/** g_hConnectEvent 静态的全局事件。用来控制是否有连接
+	*/
+	static HANDLE g_hConnectEvent;
+
+	/** g_hExitEvent 静态的全局事件。用来控制用户是否选择了退出
+	*/
+	static HANDLE g_hExitEvent;
 
 private:
 	/** 构造函数

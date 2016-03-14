@@ -19,7 +19,7 @@ RCDownloadCommand::~RCDownloadCommand()
 
 }
 
-void RCDownloadCommand::Execute()
+void RCDownloadCommand::Init()
 {
 	std::string nRemotePath;
 	std::string nLocalPath;
@@ -30,8 +30,5 @@ void RCDownloadCommand::Execute()
 	std::cout << "please input local path：";
 	std::cin >> nLocalPath;
 
-	std::string nCmdLine = "adb pull " + nRemotePath + " " + nLocalPath;
-	std::cout << "Execute Command: " << nCmdLine << std::endl;
-
-	DoExecute(nCmdLine);
+	m_CmdLine = "adb pull " + nRemotePath + " " + nLocalPath;
 }
