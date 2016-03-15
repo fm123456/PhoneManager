@@ -26,7 +26,6 @@ DWORD WINAPI CheckThread(LPVOID pM)
 	}
 
 	bool PreConnectionFlag = false;
-
 	while (::WaitForSingleObject(RCCommandFactory::g_hExitEvent, 0) == 0)
 	{
 		pCheckCmd->Execute();
